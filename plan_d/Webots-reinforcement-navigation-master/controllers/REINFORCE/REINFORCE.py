@@ -1,7 +1,7 @@
 # Add the controller Webots Python library path
-import sys
-webots_path = 'C:\Program Files\Webots\lib\controller\python'
-sys.path.append(webots_path)
+# import sys
+# webots_path = 'C:\Program Files\Webots\lib\controller\python'
+# sys.path.append(webots_path)
 
 # Add Webots controlling libraries
 from controller import Robot
@@ -19,6 +19,10 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 
+# == VPSC ======
+
+
+# ==============
 
 
 
@@ -338,7 +342,7 @@ class Agent_REINFORCE():
     
     def load(self):
         """Load pre-trained model parameters."""
-        self.network.load_state_dict(torch.load(self.load_path))
+        self.network.load_state_dict(torch.load(self.load_path, map_location=device))
 
 
     def compute_returns(self, rewards):
