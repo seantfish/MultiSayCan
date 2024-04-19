@@ -1,0 +1,3 @@
+[submodule "plan_d/Webots-reinforcement-navigation"]
+	path = plan_d/Webots-reinforcement-navigation
+	url = https://github.com/MehdiShahbazi/Webots-reinforcement-navigation.git
