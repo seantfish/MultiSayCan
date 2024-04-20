@@ -19,6 +19,9 @@ import numpy as np
 
 from math import atan2, pi
 import torch
+import openai
+
+
 
 # https://github.com/aidudezzz/deepbots-tutorials/blob/master/robotSupervisorSchemeTutorial/README.md
 class GroundRobot(RobotSupervisorEnv):
@@ -398,26 +401,136 @@ class Action():
                 i = limit
                 obs, rewards, dones, info = self.env.step(4)
         # self.env.stop()
-        
-        
+             
     def get_affordance(self):
         obs = self.env.get_observations()
         affordances = self.affordance_func(torch.tensor(obs))
         affordance = affordances.mean().item()
         return affordance
+    
+class CameraAction():
+   def __init__(self, camera, env):
+      self.env = env
+      self.camera = camera
+    
 
-ground_action_set = {
+
+action_set = {
     'go to the red square': Action([-2, -2], env, model),
     'go to the blue square': Action([2, -2], env, model),
     'go to the green square': Action([2, 2], env, model),
     'go to the yellow square': Action([-2, 2], env, model),
 }
 
-for action in ground_action_set.keys():
-    print(action)
-    do_action = ground_action_set[action]
-    print(do_action.get_affordance())
-    do_action.go()
+camera_action_set = {
+    'get an overhead view': CameraAction('uav camera', env)
+}
+
+# Sanity Check
+\
+# for action in action_set.keys():
+#     print(action)
+#     do_action = action_set[action]
+#     print(do_action.get_affordance())
+#     do_action.go()
+
+# =================================================================================================================
+# SayCan
+# =================================================================================================================
+
+client = openai.OpenAI(
+  base_url="http://localhost:8000/v1", # "http://<Your api-server IP>:port"
+  api_key = "sk-no-key-required"
+)
+
+overwrite_cache = True
+if overwrite_cache:
+  LLM_CACHE = {}
+
+def gpt3_call(engine="text-ada-001", prompt="", max_tokens=128, temperature=0,
+              logprobs=1, echo=False):
+  full_query = ""
+  for p in prompt:
+    full_query += p
+  id = tuple((engine, full_query, max_tokens, temperature, logprobs, echo))
+  if id in LLM_CACHE.keys():
+    print('cache hit, returning')
+    response = LLM_CACHE[id]
+  else:
+    # print(prompt, max_tokens, temperature, logprobs, echo)
+    response = {}
+    response["choices"] = []
+    for p in prompt:
+        r = client.completions.create(
+                                    model="llama_cpp",
+                                    prompt=p,
+                                    max_tokens=1,
+                                    temperature=temperature,
+                                    logprobs=logprobs,
+                                    echo=True)
+        r_logprobs = {}
+        r_logprobs['tokens'] = r.choices[0].logprobs.tokens[:-1]
+        r_logprobs['token_logprobs'] = r.choices[0].logprobs.token_logprobs[:-1]
+        r_choice = {}
+        r_choice["logprobs"] = r_logprobs
+        response["choices"].append(r_choice)
+    LLM_CACHE[id] = response
+  return response
+
+def gpt3_scoring(query, options, engine="text-ada-001", limit_num_options=None, option_start="\n", verbose=False, print_tokens=False):
+  if limit_num_options:
+    options = options[:limit_num_options]
+  verbose and print("Scoring", len(options), "options")
+  gpt3_prompt_options = [query + option for option in options]
+  response = gpt3_call(
+      engine=engine,
+      prompt=gpt3_prompt_options,
+      max_tokens=0,
+      logprobs=1,
+      temperature=0,
+      echo=True,)
+
+  scores = {}
+  for option, choice in zip(options, response["choices"]):
+    tokens = choice["logprobs"]["tokens"]
+    token_logprobs = choice["logprobs"]["token_logprobs"]
+
+    total_logprob = 0
+    for token, token_logprob in zip(reversed(tokens), reversed(token_logprobs)):
+      print_tokens and print(token, token_logprob)
+      if option_start is None and not token in option:
+        break
+      if token == option_start:
+        break
+      total_logprob += token_logprob
+    scores[option] = total_logprob
+
+  for i, option in enumerate(sorted(scores.items(), key=lambda x : -x[1])):
+    verbose and print(option[1], "\t", option[0])
+    if i >= 10:
+      break
+
+  return scores, response
+
+# def make_options(pick_targets=None, place_targets=None, options_in_api_form=True, termination_string="done()"):
+#   if not pick_targets:
+#     pick_targets = PICK_TARGETS
+#   if not place_targets:
+#     place_targets = PLACE_TARGETS
+#   options = []
+#   for pick in pick_targets:
+#     for place in place_targets:
+#       if options_in_api_form:
+#         option = "robot.pick_and_place({}, {})".format(pick, place)
+#       else:
+#         option = "Pick the {} and place it on the {}.".format(pick, place)
+#       options.append(option)
+
+#   options.append(termination_string)
+#   print("Considering", len(options), "options")
+#   return options
+
+
 
 
 # new_logger = configure('.', ["stdout", "csv", "tensorboard"])
