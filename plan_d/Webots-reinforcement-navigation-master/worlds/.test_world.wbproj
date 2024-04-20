@@ -8,3 +8,5 @@ orthographicViewHeight: 1
 textFiles: -1
 globalOptionalRendering: DistanceSensorRays
 consoles: Console:All:All
+renderingDevicePerspectives: Pioneer 3-DX:camera;1;1.90625;0.0032175;0.0209005
+renderingDevicePerspectives: Pioneer 3-DX:uav camera;1;1.91605;0.0032175;0.427652

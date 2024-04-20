@@ -62,6 +62,12 @@ class GroundRobot(RobotSupervisorEnv):
         self.imu = self.getDevice("inertial unit")
         self.imu.enable(sampling_period)
 
+        self.cam = self.getDevice("camera")
+        self.cam.enable(sampling_period)
+
+        self.uav_cam = self.getDevice("uav camera")
+        self.uav_cam.enable(sampling_period)
+
         # List of all available sensors
         available_devices = list(self.devices.keys())
         
