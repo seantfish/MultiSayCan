@@ -1,0 +1,7 @@
+deepbots
+
+stable-baselines3[extra]
+torch
+torchvision
+torchaudio
+protobuf >= 3.19.6, != 4.24.0, < 5.0.
