@@ -17,6 +17,8 @@ from stable_baselines3.common.callbacks import BaseCallback
 from gym.spaces import Box, Discrete
 import numpy as np
 
+from math import atan2, pi
+
 # https://github.com/aidudezzz/deepbots-tutorials/blob/master/robotSupervisorSchemeTutorial/README.md
 class CartpoleRobot(RobotSupervisorEnv):
     def __init__(self):
@@ -55,9 +57,13 @@ class CartpoleRobot(RobotSupervisorEnv):
         self.touch = self.getDevice("touch sensor")
         self.touch.enable(sampling_period)
 
+        #~~ 4) Enable Intertial Unit
+        self.imu = self.getDevice("inertial unit")
+        self.imu.enable(sampling_period)
+
         # List of all available sensors
         available_devices = list(self.devices.keys())
-        # print(available_devices)
+        
         
         # Filter sensors name that contain 'so'
         filtered_list = [item for item in available_devices if 'so' in item and any(char.isdigit() for char in item)]
@@ -102,8 +108,8 @@ class CartpoleRobot(RobotSupervisorEnv):
 
 
         # Inputs and Outputs of NN
-        self.observation_space = Box(low=np.array([0, self.min_sensor, self.min_sensor]),
-                                     high=np.array([self.floor_size, self.max_sensor, self.max_sensor]),
+        self.observation_space = Box(low=np.array([0, self.min_sensor, self.min_sensor, 0]),
+                                     high=np.array([1, self.max_sensor, self.max_sensor, 1]),
                                      dtype=np.float64)
         self.action_space = Discrete(3)
 
@@ -155,9 +161,16 @@ class CartpoleRobot(RobotSupervisorEnv):
     def get_heading_to_goal(self):
         gps_value = self.gps.getValues()[0:2]
         current_coordinate = np.array(gps_value)
-        # distance_to_goal = np.linalg.norm(self.destination_coordinate - current_coordinate)
-        # normalizied_coordinate_vector = self.normalizer(distance_to_goal, min_value=0, max_value=self.floor_size)
-        return 0
+
+        goal_diff = self.destination_coordinate - current_coordinate
+        goal_angle = atan2(goal_diff[1], goal_diff[0])
+
+        imu_yaw = self.imu.getRollPitchYaw()[2]
+
+        rel_orientation = goal_angle - imu_yaw
+        # print(rel_orientation)
+        normalizied_orient_vector = self.normalizer(rel_orientation, min_value=(-1 * pi), max_value=pi)
+        return normalizied_orient_vector
         # return normalizied_coordinate_vector
 
     def get_observations(self):
@@ -175,7 +188,7 @@ class CartpoleRobot(RobotSupervisorEnv):
         normalized_sensor_data = np.array(self.get_sensor_data(), dtype=np.float32)
         normalized_current_coordinate = np.array([self.get_distance_to_goal()], dtype=np.float32)
         normalized_heading = np.array([self.get_heading_to_goal()], dtype=np.float32)
-        state_vector = np.concatenate([normalized_current_coordinate, normalized_sensor_data], dtype=np.float32)
+        state_vector = np.concatenate([normalized_current_coordinate, normalized_sensor_data, normalized_heading], dtype=np.float32)
         
         return state_vector
 
@@ -191,6 +204,7 @@ class CartpoleRobot(RobotSupervisorEnv):
         
         normalized_sensor_data = self.get_sensor_data()
         normalized_current_distance = self.get_distance_to_goal()
+        normalized_current_orientation = self.get_heading_to_goal()
         
         normalized_current_distance *= 100 # The value is between 0 and 1. Multiply by 100 will make the function work better
         reach_threshold = self.reach_threshold * 100
@@ -212,6 +226,12 @@ class CartpoleRobot(RobotSupervisorEnv):
             reward += A * (1 - np.exp(-growth_factor * (1 / normalized_current_distance)))
         else: 
             reward += -normalized_current_distance / 100
+
+        # normalized_current_orientation *= 100
+        # normalized_current_orientation -= 50
+
+        # if abs(normalized_current_orientation) > 25:
+        #     reward -= .0001
             
 
         # (2) Reward or punishment based on failure or completion of task
@@ -229,11 +249,11 @@ class CartpoleRobot(RobotSupervisorEnv):
             
             
         # (3) Punish if close to obstacles
-        elif np.any(normalized_sensor_data[normalized_sensor_data > self.obstacle_threshold]):
-            reward -= 0.001
+        # elif np.any(normalized_sensor_data[normalized_sensor_data > self.obstacle_threshold]):
+        #     reward -= 0.0001
         
-        # 4 PUNISH CONSECUTIVE TURNS
-        reward -= .001 * (self.consecutive_turn - 2)
+        # # 4 PUNISH CONSECUTIVE TURNS
+        # reward -= .0001 * (self.consecutive_turn - 2)
 
         return reward
 
@@ -320,21 +340,22 @@ class FigureRecorderCallback(BaseCallback):
 env = CartpoleRobot()
 # agent = PPOAgent(number_of_inputs=env.observation_space.shape[0], number_of_actor_outputs=env.action_space.n)
 
-timestep_limit = 10000
+timestep_limit = 5000
 
 # new_logger = configure('.', ["stdout", "csv", "tensorboard"])
 
-model = PPO("MlpPolicy", env, verbose=1, n_steps=128, tensorboard_log="./tlog/")
+model = PPO("MlpPolicy", env, verbose=1, n_steps=64, tensorboard_log="./tlog/")
 # model.set_logger(new_logger)
 
 # model.load("ppo_cartpole")
 
-model.learn(total_timesteps=timestep_limit, tb_log_name='PPO')
-model.save("ppo_cartpole")
+# for i in range(10):
+#     model.learn(total_timesteps=timestep_limit, tb_log_name='PPO')
+#     model.save("ppo"+str(i))
 
 # del model # remove to demonstrate saving and loading
 
-# model = PPO.load("ppo_cartpole")
+model = PPO.load("ppo8")
 
 obs = env.reset()
 while True:
