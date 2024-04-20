@@ -148,7 +148,10 @@ class Environment(Supervisor):
         
         return normalized_sensor_data
         
-    
+# =============================================================================================================
+# CHECKPOINT - OBSERVATIONS / STATE
+# =============================================================================================================
+
     def get_observations(self):
         """
         Obtains and returns the normalized sensor data and current distance to the goal.
@@ -454,7 +457,11 @@ class Agent_REINFORCE():
         formatted_time = str(elapsed_timedelta).split('.')[0]
         print(f'Total Spent Time: {formatted_time}')
         
-              
+    
+# =============================================================================================================
+# CHECKPOINT - AGENT RUNS HERE
+# =============================================================================================================
+
     def test(self):
         """
         Test the trained agent.
@@ -468,6 +475,7 @@ class Agent_REINFORCE():
         
         for episode in range(1, self.num_episodes+1):
             state = self.env.reset()
+            print(state)
             done = False
             ep_reward = 0
             while not done:

@@ -1296,7 +1296,7 @@ Robot {
       -0.06 0 0.06
     ]
   }
-  controller "REINFORCE"
+  controller "PPO"
   supervisor TRUE
 }
 WoodenBox {
