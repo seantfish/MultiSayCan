@@ -287,10 +287,18 @@ class GroundRobot(RobotSupervisorEnv):
         # if len(self.episode_score_list) > 100:  # Over 100 trials thus far
         #     if np.mean(self.episode_score_list[-100:]) > 195.0:  # Last 100 episodes' scores average value
         if self.solve:
+            self.left_motor.setPosition(0)
+            self.right_motor.setPosition(0)
             self.left_motor.setVelocity(0)
             self.right_motor.setVelocity(0)
             return True
         return False
+
+    # def stop(self):
+    #     self.left_motor.setPosition(0)
+    #     self.right_motor.setPosition(0)
+    #     self.left_motor.setVelocity(0)
+    #     self.right_motor.setVelocity(0)
     
     def get_info(self):
         info = {
@@ -325,9 +333,12 @@ class GroundRobot(RobotSupervisorEnv):
             self.left_motor.setVelocity(-self.max_speed)
             self.right_motor.setVelocity(self.max_speed)
             self.consecutive_turn += 1
-        # elif action == 4: # stay
-        #     self.left_motor.setVelocity(0)
-        #     self.right_motor.setVelocity(0)
+        # print("ACTION")
+        else: # stay
+            self.left_motor.setPosition(0)
+            self.right_motor.setPosition(0)
+            self.left_motor.setVelocity(0)
+            self.right_motor.setVelocity(0)
         if self.consecutive_turn < 2:
             self.consecutive_turn = 2
         if self.consecutive_turn > 10:
@@ -368,16 +379,18 @@ class Action():
         self.model = model
         self.affordance_func = self.model.policy.mlp_extractor.value_net
 
-    def go(self, limit=2000):
+    def go(self, limit=1000):
         self.env.set_destination(self.coordinate)
-        for i in range(limit):
+        i = 0
+        while i < limit:
             obs = self.env.get_observations()
             # print(obs)
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
             if self.env.solved():
                 print("SOLVED")
-                break
+                i = limit
+                obs, rewards, dones, info = self.env.step(4)
         # self.env.stop()
         
         
