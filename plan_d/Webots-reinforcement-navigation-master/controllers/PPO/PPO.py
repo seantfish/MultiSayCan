@@ -175,7 +175,7 @@ class GroundRobot(RobotSupervisorEnv):
         rel_orientation = (goal_angle - imu_yaw) 
         if rel_orientation > pi:
             rel_orientation -= 2 * pi
-        elif rel_orientation < pi:
+        elif rel_orientation < -1 * pi:
             rel_orientation += 2 * pi
         # print(rel_orientation)
         normalizied_orient_vector = self.normalizer(rel_orientation, min_value=(-1 * pi), max_value=pi)
