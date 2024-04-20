@@ -28,7 +28,7 @@ RectangleArena {
   wallHeight 0.8
 }
 Solid {
-  translation -3.2 -3.2 0
+  translation -2.5 -2.5 0
   children [
     Shape {
       appearance Appearance {
@@ -44,7 +44,7 @@ Solid {
   name "Red"
 }
 Solid {
-  translation 3.2 -3.2 0
+  translation 2.5 -2.5 0
   children [
     Shape {
       appearance Appearance {
@@ -57,10 +57,10 @@ Solid {
       }
     }
   ]
-  name "Green"
+  name "Blue"
 }
 Solid {
-  translation 3.2 3.2 0
+  translation 2.5 2.5 0
   children [
     Shape {
       appearance Appearance {
@@ -73,10 +73,10 @@ Solid {
       }
     }
   ]
-  name "Blue"
+  name "Green"
 }
 Solid {
-  translation -3.2 3.2 0
+  translation -2.5 2.5 0
   children [
     Shape {
       appearance Appearance {

@@ -116,6 +116,7 @@ class GroundRobot(RobotSupervisorEnv):
 
     def set_destination(self, coordinate):
         self.destination_coordinate = np.array(coordinate)
+        self.solve = False
 
     def normalizer(self, value, min_value, max_value):
         """
@@ -282,6 +283,8 @@ class GroundRobot(RobotSupervisorEnv):
         # if len(self.episode_score_list) > 100:  # Over 100 trials thus far
         #     if np.mean(self.episode_score_list[-100:]) > 195.0:  # Last 100 episodes' scores average value
         if self.solve:
+            self.left_motor.setVelocity(0)
+            self.right_motor.setVelocity(0)
             return True
         return False
     
@@ -350,27 +353,20 @@ env = GroundRobot()
 env.reset()
 
 # model = PPO("MlpPolicy", env, verbose=1, n_steps=64)
-model = PPO.load("ppo8")
+model = PPO.load("ppo9")
 
 # =================================================================================================================
 # Actions
 # =================================================================================================================
 
-
-
 class Action():
-    def __init__(self, name, coordinate, desc, env, model):
-        self.name = name
+    def __init__(self, coordinate, env, model):
         self.coordinate = coordinate
-        self.desc = desc
         self.env = env
         self.model = model
-#         self.env = GroundRobot(coordinate=coordinate)
-#         self.model = PPO.load("ppo8")
         self.affordance_func = self.model.policy.mlp_extractor.value_net
-#         self.env.reset()
 
-    def go(self, limit=1000):
+    def go(self, limit=2000):
         self.env.set_destination(self.coordinate)
         for i in range(limit):
             obs = self.env.get_observations()
@@ -387,19 +383,20 @@ class Action():
         affordances = self.affordance_func(torch.tensor(obs))
         affordance = affordances.mean().item()
         return affordance
-    
-goto_red = Action('red', [-3.2, -3.2], 'hi', env, model)
 
-print(goto_red.get_affordance())
+ground_action_set = {
+    'go to the red square': Action([-2.5, -2.5], env, model),
+    'go to the blue square': Action([2.5, -2.5], env, model),
+    'go to the green square': Action([2.5, 2.5], env, model),
+    'go to the yellow square': Action([-2.5, 2.5], env, model),
+}
 
-goto_red.go()
+for action in ground_action_set.keys():
+    print(action)
+    do_action = ground_action_set[action]
+    print(do_action.get_affordance())
+    do_action.go()
 
-print("===================")
-del goto_red
-# timestep_limit = 5000
-goto_green = Action('red', [3.2, 3.2], 'hi', env, model)
-
-goto_green.go()
 
 # new_logger = configure('.', ["stdout", "csv", "tensorboard"])
 
