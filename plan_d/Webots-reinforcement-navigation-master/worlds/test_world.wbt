@@ -10,8 +10,8 @@ EXTERNPROTO "https://raw.githubusercontent.com/cyberbotics/webots/R2023b/project
 WorldInfo {
 }
 Viewpoint {
-  orientation 0.45738140397545923 0.4550219482365827 -0.7640401022985785 1.8460908510985472
-  position -0.4125466040459816 10.955877344088895 20.864755878177224
+  orientation 0.28223733447742294 0.2902381606346879 -0.9143871702613027 1.6393660111583659
+  position -1.1670940002253525 15.176122226353348 10.399939175148415
 }
 TexturedBackground {
 }
@@ -28,7 +28,7 @@ RectangleArena {
   wallHeight 0.8
 }
 Solid {
-  translation -2.5 -2.5 0
+  translation -2 -2 0
   children [
     Shape {
       appearance Appearance {
@@ -36,7 +36,7 @@ Solid {
           diffuseColor 1 0 0
         }
       }
-      geometry Box { 
+      geometry Box {
         size 1 1 0.01
       }
     }
@@ -44,7 +44,7 @@ Solid {
   name "Red"
 }
 Solid {
-  translation 2.5 -2.5 0
+  translation 2 -2 0
   children [
     Shape {
       appearance Appearance {
@@ -60,7 +60,7 @@ Solid {
   name "Blue"
 }
 Solid {
-  translation 2.5 2.5 0
+  translation 2 2 0
   children [
     Shape {
       appearance Appearance {
@@ -76,7 +76,7 @@ Solid {
   name "Green"
 }
 Solid {
-  translation -2.5 2.5 0
+  translation -2 2 0
   children [
     Shape {
       appearance Appearance {
@@ -90,25 +90,6 @@ Solid {
     }
   ]
   name "Yellow"
-}
-
-Solid {
-  translation 2.45 0 0.001
-  children [
-    Shape {
-      appearance Appearance {
-        texture ImageTexture {
-          url [
-            "./Target.png"
-          ]
-        }
-      }
-      geometry Plane {
-        size 1.5 1.5
-      }
-      castShadows FALSE
-    }
-  ]
 }
 Robot {
   translation -2.484980323972914 0.0001829236884366975 0.10038465891359351
@@ -1370,5 +1351,17 @@ WoodenBox {
   translation 7.34969e-08 -0.02 0.469615
   rotation -8.14795746378059e-18 -8.064037699868175e-18 1 1.5708000000000002
   name "wooden box(1)"
+  size 1.4 0.3 1.2
+}
+WoodenBox {
+  translation -1.13491e-05 3.09 0.469615
+  rotation -8.14795746378059e-18 -8.064037699868175e-18 1 1.5708000000000002
+  name "wooden box(2)"
+  size 1.4 0.3 1.2
+}
+WoodenBox {
+  translation -5.72914e-06 1.56 0.469615
+  rotation -8.14795746378059e-18 -8.064037699868175e-18 1 1.5708000000000002
+  name "wooden box(3)"
   size 1.4 0.3 1.2
 }

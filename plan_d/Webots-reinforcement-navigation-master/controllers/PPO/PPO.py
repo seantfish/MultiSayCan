@@ -172,7 +172,7 @@ class GroundRobot(RobotSupervisorEnv):
 
         imu_yaw = self.imu.getRollPitchYaw()[2]
 
-        rel_orientation = goal_angle - imu_yaw
+        rel_orientation = (goal_angle - imu_yaw) % pi
         # print(rel_orientation)
         normalizied_orient_vector = self.normalizer(rel_orientation, min_value=(-1 * pi), max_value=pi)
         return normalizied_orient_vector
@@ -329,9 +329,7 @@ class GroundRobot(RobotSupervisorEnv):
         if self.consecutive_turn > 10:
             self.consecutive_turn = 10
     
-    def stop(self):
-        self.left_motor.setVelocity(0)
-        self.right_motor.setVelocity(0)
+
 
 
 
@@ -353,7 +351,7 @@ env = GroundRobot()
 env.reset()
 
 # model = PPO("MlpPolicy", env, verbose=1, n_steps=64)
-model = PPO.load("ppo9")
+model = PPO.load("ppo8")
 
 # =================================================================================================================
 # Actions
@@ -370,12 +368,13 @@ class Action():
         self.env.set_destination(self.coordinate)
         for i in range(limit):
             obs = self.env.get_observations()
+            # print(obs)
             action, _states = self.model.predict(obs)
             obs, rewards, dones, info = self.env.step(action)
             if self.env.solved():
                 print("SOLVED")
                 break
-        self.env.stop()
+        # self.env.stop()
         
         
     def get_affordance(self):
@@ -385,10 +384,10 @@ class Action():
         return affordance
 
 ground_action_set = {
-    'go to the red square': Action([-2.5, -2.5], env, model),
-    'go to the blue square': Action([2.5, -2.5], env, model),
-    'go to the green square': Action([2.5, 2.5], env, model),
-    'go to the yellow square': Action([-2.5, 2.5], env, model),
+    'go to the red square': Action([-2, -2], env, model),
+    'go to the blue square': Action([2, -2], env, model),
+    'go to the green square': Action([2, 2], env, model),
+    'go to the yellow square': Action([-2, 2], env, model),
 }
 
 for action in ground_action_set.keys():
