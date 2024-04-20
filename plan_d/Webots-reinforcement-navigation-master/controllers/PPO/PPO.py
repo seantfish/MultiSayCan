@@ -18,9 +18,10 @@ from gym.spaces import Box, Discrete
 import numpy as np
 
 from math import atan2, pi
+import torch
 
 # https://github.com/aidudezzz/deepbots-tutorials/blob/master/robotSupervisorSchemeTutorial/README.md
-class CartpoleRobot(RobotSupervisorEnv):
+class GroundRobot(RobotSupervisorEnv):
     def __init__(self):
         super().__init__(timestep=500)
 
@@ -60,6 +61,12 @@ class CartpoleRobot(RobotSupervisorEnv):
         #~~ 4) Enable Intertial Unit
         self.imu = self.getDevice("inertial unit")
         self.imu.enable(sampling_period)
+
+        self.cam = self.getDevice("camera")
+        self.cam.enable(sampling_period)
+
+        self.uav_cam = self.getDevice("uav camera")
+        self.uav_cam.enable(sampling_period)
 
         # List of all available sensors
         available_devices = list(self.devices.keys())
@@ -112,6 +119,10 @@ class CartpoleRobot(RobotSupervisorEnv):
                                      high=np.array([1, self.max_sensor, self.max_sensor, 1]),
                                      dtype=np.float64)
         self.action_space = Discrete(3)
+
+    def set_destination(self, coordinate):
+        self.destination_coordinate = np.array(coordinate)
+        self.solve = False
 
     def normalizer(self, value, min_value, max_value):
         """
@@ -167,7 +178,11 @@ class CartpoleRobot(RobotSupervisorEnv):
 
         imu_yaw = self.imu.getRollPitchYaw()[2]
 
-        rel_orientation = goal_angle - imu_yaw
+        rel_orientation = (goal_angle - imu_yaw) 
+        if rel_orientation > pi:
+            rel_orientation -= 2 * pi
+        elif rel_orientation < -1 * pi:
+            rel_orientation += 2 * pi
         # print(rel_orientation)
         normalizied_orient_vector = self.normalizer(rel_orientation, min_value=(-1 * pi), max_value=pi)
         return normalizied_orient_vector
@@ -278,9 +293,18 @@ class CartpoleRobot(RobotSupervisorEnv):
         # if len(self.episode_score_list) > 100:  # Over 100 trials thus far
         #     if np.mean(self.episode_score_list[-100:]) > 195.0:  # Last 100 episodes' scores average value
         if self.solve:
-            self.solve = False
+            self.left_motor.setPosition(0)
+            self.right_motor.setPosition(0)
+            self.left_motor.setVelocity(0)
+            self.right_motor.setVelocity(0)
             return True
         return False
+
+    # def stop(self):
+    #     self.left_motor.setPosition(0)
+    #     self.right_motor.setPosition(0)
+    #     self.left_motor.setVelocity(0)
+    #     self.right_motor.setVelocity(0)
     
     def get_info(self):
         info = {
@@ -315,13 +339,20 @@ class CartpoleRobot(RobotSupervisorEnv):
             self.left_motor.setVelocity(-self.max_speed)
             self.right_motor.setVelocity(self.max_speed)
             self.consecutive_turn += 1
-        # elif action == 4: # stay
-        #     self.left_motor.setVelocity(0)
-        #     self.right_motor.setVelocity(0)
+        # print("ACTION")
+        else: # stay
+            self.left_motor.setPosition(0)
+            self.right_motor.setPosition(0)
+            self.left_motor.setVelocity(0)
+            self.right_motor.setVelocity(0)
         if self.consecutive_turn < 2:
             self.consecutive_turn = 2
         if self.consecutive_turn > 10:
             self.consecutive_turn = 10
+    
+
+
+
 
 
 class FigureRecorderCallback(BaseCallback):
@@ -337,17 +368,61 @@ class FigureRecorderCallback(BaseCallback):
         plt.close()
         return True
 
-env = CartpoleRobot()
-# agent = PPOAgent(number_of_inputs=env.observation_space.shape[0], number_of_actor_outputs=env.action_space.n)
+env = GroundRobot()
+env.reset()
 
-timestep_limit = 5000
+# model = PPO("MlpPolicy", env, verbose=1, n_steps=64)
+model = PPO.load("ppo8")
+
+# =================================================================================================================
+# Actions
+# =================================================================================================================
+
+class Action():
+    def __init__(self, coordinate, env, model):
+        self.coordinate = coordinate
+        self.env = env
+        self.model = model
+        self.affordance_func = self.model.policy.mlp_extractor.value_net
+
+    def go(self, limit=1000):
+        self.env.set_destination(self.coordinate)
+        i = 0
+        while i < limit:
+            obs = self.env.get_observations()
+            # print(obs)
+            action, _states = self.model.predict(obs)
+            obs, rewards, dones, info = self.env.step(action)
+            if self.env.solved():
+                print("SOLVED")
+                i = limit
+                obs, rewards, dones, info = self.env.step(4)
+        # self.env.stop()
+        
+        
+    def get_affordance(self):
+        obs = self.env.get_observations()
+        affordances = self.affordance_func(torch.tensor(obs))
+        affordance = affordances.mean().item()
+        return affordance
+
+ground_action_set = {
+    'go to the red square': Action([-2, -2], env, model),
+    'go to the blue square': Action([2, -2], env, model),
+    'go to the green square': Action([2, 2], env, model),
+    'go to the yellow square': Action([-2, 2], env, model),
+}
+
+for action in ground_action_set.keys():
+    print(action)
+    do_action = ground_action_set[action]
+    print(do_action.get_affordance())
+    do_action.go()
+
 
 # new_logger = configure('.', ["stdout", "csv", "tensorboard"])
 
-model = PPO("MlpPolicy", env, verbose=1, n_steps=64, tensorboard_log="./tlog/")
-# model.set_logger(new_logger)
 
-# model.load("ppo_cartpole")
 
 # for i in range(10):
 #     model.learn(total_timesteps=timestep_limit, tb_log_name='PPO')
@@ -355,13 +430,15 @@ model = PPO("MlpPolicy", env, verbose=1, n_steps=64, tensorboard_log="./tlog/")
 
 # del model # remove to demonstrate saving and loading
 
-model = PPO.load("ppo8")
 
-obs = env.reset()
-while True:
-    action, _states = model.predict(obs)
-    obs, rewards, dones, info = env.step(action)
-    print("DONE")
+# affordance_function = model.policy.mlp_extractor.value_net
+
+# obs = env.reset()
+# while True:
+#     action, _states = model.predict(obs)
+#     obs, rewards, dones, info = env.step(action)
+#     affordance = affordance_function(torch.tensor(obs)).mean().item()
+#     print(affordance)
 # solved = False
 
 # episode_count = 0
