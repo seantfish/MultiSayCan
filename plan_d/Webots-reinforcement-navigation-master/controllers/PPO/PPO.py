@@ -18,6 +18,7 @@ from gym.spaces import Box, Discrete
 import numpy as np
 
 from math import atan2, pi
+import torch
 
 # https://github.com/aidudezzz/deepbots-tutorials/blob/master/robotSupervisorSchemeTutorial/README.md
 class CartpoleRobot(RobotSupervisorEnv):
@@ -345,9 +346,6 @@ timestep_limit = 5000
 # new_logger = configure('.', ["stdout", "csv", "tensorboard"])
 
 model = PPO("MlpPolicy", env, verbose=1, n_steps=64, tensorboard_log="./tlog/")
-# model.set_logger(new_logger)
-
-# model.load("ppo_cartpole")
 
 # for i in range(10):
 #     model.learn(total_timesteps=timestep_limit, tb_log_name='PPO')
@@ -356,12 +354,14 @@ model = PPO("MlpPolicy", env, verbose=1, n_steps=64, tensorboard_log="./tlog/")
 # del model # remove to demonstrate saving and loading
 
 model = PPO.load("ppo8")
+affordance_function = model.policy.mlp_extractor.value_net
 
 obs = env.reset()
 while True:
     action, _states = model.predict(obs)
     obs, rewards, dones, info = env.step(action)
-    print("DONE")
+    affordance = affordance_function(torch.tensor(obs)).mean().item()
+    print(affordance)
 # solved = False
 
 # episode_count = 0
