@@ -29,6 +29,8 @@ import openai
 
 from heapq import nlargest
 
+import time
+
 
 
 # https://github.com/aidudezzz/deepbots-tutorials/blob/master/robotSupervisorSchemeTutorial/README.md
@@ -454,7 +456,7 @@ action_set = {
 
 camera_action_set = {
     'get a description of the robot camera view': CameraAction('camera', env),
-    'get a description of an overhead overhead view': CameraAction('uav camera', env)
+    'get a description of an overhead camera view': CameraAction('uav camera', env)
 }
 
 termination_action_set = {
@@ -606,12 +608,18 @@ def gpt3_scoring(query, options, engine="itdontmatter", limit_num_options=None, 
 
 # =================================================================================================================
 
-def build_scene_description(found_objects, block_name="box", bowl_name="circle"):
-  scene_description = f"objects = {found_objects}"
-  scene_description = scene_description.replace(block_name, "block")
-  scene_description = scene_description.replace(bowl_name, "bowl")
-  scene_description = scene_description.replace("'", "")
-  return scene_description
+def build_scene_description(image, processor, model, questions):
+    scene_description = ""
+    pixel_values = processor(images=image, return_tensors="pt").pixel_values
+
+    for question in questions:
+        input_ids = processor(text=question, add_special_tokens=False).input_ids
+        input_ids = [processor.tokenizer.cls_token_id] + input_ids
+        input_ids = torch.tensor(input_ids).unsqueeze(0)
+        generated_ids = model.generate(pixel_values=pixel_values, input_ids=input_ids, max_length=50)
+        generated_caption = processor.batch_decode(generated_ids, skip_special_tokens=True)[0]
+        scene_description += generated_caption + "; "
+    return scene_description
 
 def step_to_nlp(step):
   step = step.replace("robot.pick_and_place(", "")
@@ -676,15 +684,27 @@ def plot_saycan(llm_scores, vfs, combined_scores, task, correct=True, show_top=N
 
 
 
-def affordance_scoring(actions):
+def affordance_scoring(actions, desc=""):
+    colors = ["red", "blue", "green", "yellow"]
     affordance_scores = {}
     for action_desc in actions.keys():
-        action = actions[action_desc]
-        action_aff = action.get_affordance()
-        if action_desc != 'done':
-            affordance_scores[action_desc] = action_aff
+        for color in colors:
+            if color in action_desc and color in desc:  
+                action = actions[action_desc]
+                action_aff = action.get_affordance()
+                affordance_scores[action_desc] = action_aff
+            if color in action_desc and color not in desc:
+                action = actions[action_desc]
+                action_aff = .2 * action.get_affordance()
+                affordance_scores[action_desc] = action_aff            
     max_val = np.max(np.array(list(affordance_scores.values())))
-    affordance_scores['done'] = .2 * max_val
+    if max_val == 0:
+       max_val = 1
+    for action_desc in actions.keys():
+        if action_desc not in affordance_scores.keys():
+            if action_desc != 'done':
+               affordance_scores[action_desc] = max_val
+    affordance_scores['done'] = .1 * max_val
     return affordance_scores
 
 
@@ -694,11 +714,17 @@ def affordance_scoring(actions):
 # llm_scores, _ = gpt3_scoring(query, options, verbose=True)
 
 # affordance_scores = affordance_scoring(base_action_set)
+# # print(affordance_scores)
+
 
 # combined_scores = {option: np.exp(llm_scores[option]) * affordance_scores[option] for option in options}
 # combined_scores = normalize_scores(combined_scores)
 # selected_task = max(combined_scores, key=combined_scores.get)
 # print("Selecting: ", selected_task)
+
+# =================================================================================================================
+# Experimentation
+# =================================================================================================================
 
 tasks = [
    "visit four different color squares",
@@ -706,6 +732,172 @@ tasks = [
    "find a chair near a green square",
    "find a table near a red square"
 ]
+
+base_action_set = {
+    'go to the red square': Action([-2, -2], env, model),
+    'go to the blue square': Action([2, -2], env, model),
+    'go to the green square': Action([2, 2], env, model),
+    'go to the yellow square': Action([-2, 2], env, model),
+    'done': TerminationAction(env)
+}
+
+
+class Experiment():
+    def __init__(self, tasks, action_set):
+        self.tasks = tasks
+        self.action_set = action_set
+        self.task_idx = 0
+        self.action_depth_limit = 12
+        self.cam = CameraAction('camera', env)
+        self.questions = [
+            "the square colors are ",
+            "furniture in the room includes "
+        ]
+        self.all_llm_scores = []
+        self.all_affordance_scores = []
+        self.all_combined_scores = []
+        selected_task = ""
+        self.steps_text = []
+        self.image = None
+
+    def create_prompt(self, task, desc):
+        prompt = "You are creating a plan for a robot. "
+        prompt += "Your task is " + task + ". \n"
+        prompt += "You observe the following: " + desc
+        prompt += "Your plan looks like: \n"
+        for step in self.steps_text:
+           prompt += step + "\n"
+        print(prompt)
+        return prompt
+
+    def run_task(self, task_idx):
+        task = self.tasks[task_idx]
+
+        env.reset()
+        
+        i = 0
+        self.image = self.cam.go()
+        while i < self.action_depth_limit:
+
+            scene_description = build_scene_description(self.image, git_processor, git_model, self.questions)
+            affordance_scores = affordance_scoring(self.action_set, scene_description)
+            
+            prompt = self.create_prompt(task, scene_description)
+            options = self.action_set.keys()
+
+            llm_scores, _ = gpt3_scoring(prompt, options, verbose=True, print_tokens=False)
+            combined_scores = {option: np.exp(llm_scores[option]) * affordance_scores[option] for option in options}
+            combined_scores = normalize_scores(combined_scores)
+            selected_action = max(combined_scores, key=combined_scores.get)
+            self.steps_text.append(selected_action)
+            print(i, "Selecting: ", selected_action)
+
+            self.all_llm_scores.append(llm_scores)
+            self.all_affordance_scores.append(affordance_scores)
+            self.all_combined_scores.append(combined_scores)
+
+            if selected_action == 'done':
+               print("DONE")
+               i += self.action_depth_limit
+               break
+
+            if "overhead" in selected_action:
+               self.cam = CameraAction('uav camera', env)
+               self.image = self.cam.go()
+            else:
+               self.cam = CameraAction('camera', env)
+               self.action_set[selected_action].go()
+               self.image = self.cam.go()
+            i += 1
+
+    def run_tasks(self):
+        for task_idx in range(len(self.tasks)):
+            self.run_task(task_idx)
+        
+
+    
+
+    
+tasks = [
+   "visit four different color squares"
+]
+
+base_experiment = Experiment(tasks, base_action_set)
+base_experiment.run_tasks()
+
+# start = time.time()
+
+# plot_on = True
+# # max_tasks = 5
+
+
+# found_objects = vild(image_path, category_name_string, vild_params, plot_on=False)
+# scene_description = build_scene_description(found_objects)
+# env_description = scene_description
+
+# print(scene_description)
+
+# gpt3_prompt = gpt3_context
+# if use_environment_description:
+#   gpt3_prompt += "\n" + env_description
+# gpt3_prompt += "\n# " + raw_input + "\n"
+
+# all_llm_scores = []
+# all_affordance_scores = []
+# all_combined_scores = []
+# affordance_scores = affordance_scoring(options, found_objects, block_name="box", bowl_name="circle", verbose=False)
+# num_tasks = 0
+# selected_task = ""
+# steps_text = []
+# while not selected_task == termination_string:
+#   num_tasks += 1
+#   if num_tasks > max_tasks:
+#     break
+
+#   llm_scores, _ = gpt3_scoring(gpt3_prompt, options, verbose=True, engine=ENGINE, print_tokens=False)
+#   combined_scores = {option: np.exp(llm_scores[option]) * affordance_scores[option] for option in options}
+#   combined_scores = normalize_scores(combined_scores)
+#   selected_task = max(combined_scores, key=combined_scores.get)
+#   steps_text.append(selected_task)
+#   print(num_tasks, "Selecting: ", selected_task)
+#   gpt3_prompt += selected_task + "\n"
+
+#   all_llm_scores.append(llm_scores)
+#   all_affordance_scores.append(affordance_scores)
+#   all_combined_scores.append(combined_scores)
+
+# end = time.time()
+# print("TIME: ", end - start)
+
+# if plot_on:
+#   for llm_scores, affordance_scores, combined_scores, step in zip(
+#       all_llm_scores, all_affordance_scores, all_combined_scores, steps_text):
+#     plot_saycan(llm_scores, affordance_scores, combined_scores, step, show_top=10)
+
+# print('**** Solution ****')
+# print(env_description)
+# print('# ' + raw_input)
+# for i, step in enumerate(steps_text):
+#   if step == '' or step == termination_string:
+#     break
+#   print('Step ' + str(i) + ': ' + step)
+#   nlp_step = step_to_nlp(step)
+
+# if not only_plan:
+#   print('Initial state:')
+#   plt.imshow(env.get_camera_image())
+
+#   for i, step in enumerate(steps_text):
+#     if step == '' or step == termination_string:
+#       break
+#     nlp_step = step_to_nlp(step)
+#     print('GPT-3 says next step:', nlp_step)
+
+#     obs = run_cliport(obs, nlp_step)
+
+#   # Show camera image after task.
+#   print('Final state:')
+#   plt.imshow(env.get_camera_image())
 
 
 
