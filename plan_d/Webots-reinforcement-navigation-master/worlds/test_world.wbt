@@ -13,7 +13,7 @@ WorldInfo {
 }
 Viewpoint {
   orientation 0.45738140397545923 0.4550219482365827 -0.7640401022985785 1.8460908510985472
-  position -0.3967077304896625 12.248456472518722 23.288352545855012
+  position 1.7633777134699609 12.192949719425501 23.303839260628163
 }
 TexturedBackground {
 }
@@ -730,8 +730,6 @@ Robot {
               }
               physics Physics {
               }
-              linearVelocity 7.229280219043872e-10 4.755027495252985e-13 5.091393712777604e-07
-              angularVelocity -3.65083826511132e-12 1.9278104692819325e-08 -9.213328775760217e-13
             }
           }
           DEF FORK_SHAPE Shape {
@@ -789,8 +787,6 @@ Robot {
         }
         physics Physics {
         }
-        linearVelocity 1.2376812934870845e-09 3.540113470606669e-13 2.478865977114202e-07
-        angularVelocity -5.30784890039492e-12 2.520022200201133e-08 -9.593801490701391e-13
       }
     }
     DEF GREEN_LED LED {
@@ -996,8 +992,6 @@ Robot {
         }
         physics Physics {
         }
-        linearVelocity 2.1947833882687215e-09 3.023341429545037e-13 2.777698311119021e-07
-        angularVelocity -4.834071924483312e-12 2.250852437467608e-08 4.303716796311772e-13
       }
     }
     DEF LOWER_YELLOW_LED LED {
@@ -1192,8 +1186,6 @@ Robot {
         boundingObject USE BOUNDING_WHEEL
         physics Physics {
         }
-        linearVelocity 2.195192805117637e-09 3.026875331908162e-13 2.777683893587122e-07
-        angularVelocity -4.835347173987834e-12 2.2508458465632923e-08 4.293669151196843e-13
       }
     }
     DEF SO_3 Pioneer3DistanceSensor {
@@ -1380,7 +1372,7 @@ WoodenBox {
 }
 OfficeChair {
   hidden position_0_0 -4.296318408414379e-05
-  hidden rotation_1 0 0 1 0.07347999270383505
+  hidden rotation_1 0 0 1 0.07347999270382295
   translation 2.967749999991782 2.856930000006764 -0.0014165113025668419
   rotation 0.0006841627310623355 0.0003090502032076355 0.9999997182046249 -2.418041397657596
 }

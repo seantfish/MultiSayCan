@@ -4,6 +4,8 @@
 #  from controller import Robot, Motor, DistanceSensor
 # from controller import Robot
 
+# from controller import Supervisor
+
 from deepbots.supervisor.controllers.robot_supervisor_env import RobotSupervisorEnv
 from utilities import normalize_to_range
 # from PPO_agent import PPOAgent, Transition
@@ -30,6 +32,7 @@ import openai
 from heapq import nlargest
 
 import time
+import os
 
 
 
@@ -368,7 +371,11 @@ class GroundRobot(RobotSupervisorEnv):
             self.consecutive_turn = 10
     
 
+    def start_recording(self, filename='hi.mp4'):
+        self.movieStartRecording(filename, 400, 400, None, 10, 70, True)
 
+    def stop_recording(self):
+        self.movieStopRecording()
 
 
 
@@ -474,7 +481,6 @@ base_action_set = {
 }
 
 # Sanity Check
-\
 
 img = None
 for action in camera_action_set.keys():
@@ -632,7 +638,7 @@ def normalize_scores(scores):
   normed_scores = {key: np.clip(scores[key] / max_score, 0, 1) for key in scores}
   return normed_scores
 
-def plot_saycan(llm_scores, vfs, combined_scores, task, correct=True, show_top=None):
+def plot_saycan(llm_scores, vfs, combined_scores, task, correct=True, show_top=None, save_path='.fig.png'):
   if show_top:
     top_options = nlargest(show_top, combined_scores, key = combined_scores.get)
     # add a few top llm options in if not already shown
@@ -680,8 +686,8 @@ def plot_saycan(llm_scores, vfs, combined_scores, task, correct=True, show_top=N
   key_strings = [key.replace("robot.pick_and_place", "").replace(", ", " to ").replace("(", "").replace(")","") for key in keys]
   plt.xticks(positions, key_strings, **font)
   ax1.legend()
-  plt.show()
-
+#   plt.show()
+  plt.savefig(save_path, bbox_inches='tight')
 
 
 def affordance_scoring(actions, desc=""):
@@ -704,7 +710,9 @@ def affordance_scoring(actions, desc=""):
         if action_desc not in affordance_scores.keys():
             if action_desc != 'done':
                affordance_scores[action_desc] = max_val
-    affordance_scores['done'] = .1 * max_val
+    affordance_scores['done'] = .3 * max_val
+    for action_desc in affordance_scores.keys():
+        affordance_scores[action_desc] *= 10
     return affordance_scores
 
 
@@ -730,7 +738,8 @@ tasks = [
    "visit four different color squares",
    "find a chair",
    "find a chair near a green square",
-   "find a table near a red square"
+   "find a table near a red square",
+   "visit the closest color square"
 ]
 
 base_action_set = {
@@ -743,11 +752,12 @@ base_action_set = {
 
 
 class Experiment():
-    def __init__(self, tasks, action_set):
+    def __init__(self, name, tasks, action_set):
+        self.name = name
         self.tasks = tasks
         self.action_set = action_set
         self.task_idx = 0
-        self.action_depth_limit = 12
+        self.action_depth_limit = 2 # 7
         self.cam = CameraAction('camera', env)
         self.questions = [
             "the square colors are ",
@@ -759,6 +769,9 @@ class Experiment():
         selected_task = ""
         self.steps_text = []
         self.image = None
+        self.plot = True
+
+        os.mkdir('./'+self.name)
 
     def create_prompt(self, task, desc):
         prompt = "You are creating a plan for a robot. "
@@ -771,6 +784,9 @@ class Experiment():
         return prompt
 
     def run_task(self, task_idx):
+        task_dir = './'+self.name+'/'+str(task_idx)
+        os.mkdir(task_dir)
+        env.start_recording(filename=task_dir+'/rec.mp4')
         task = self.tasks[task_idx]
 
         env.reset()
@@ -808,7 +824,15 @@ class Experiment():
                self.cam = CameraAction('camera', env)
                self.action_set[selected_action].go()
                self.image = self.cam.go()
+
             i += 1
+        env.stop_recording()
+        if self.plot:
+            j = 0
+            for llm_scores, affordance_scores, combined_scores, step in zip(
+                self.all_llm_scores, self.all_affordance_scores, self.all_combined_scores, self.steps_text):
+                plot_saycan(llm_scores, affordance_scores, combined_scores, step, show_top=10, save_path=task_dir+'/plot_'+str(j))
+                j += 1
 
     def run_tasks(self):
         for task_idx in range(len(self.tasks)):
@@ -822,7 +846,7 @@ tasks = [
    "visit four different color squares"
 ]
 
-base_experiment = Experiment(tasks, base_action_set)
+base_experiment = Experiment('base', tasks, base_action_set)
 base_experiment.run_tasks()
 
 # start = time.time()
