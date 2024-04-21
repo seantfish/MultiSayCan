@@ -5,3 +5,16 @@ torch
 torchvision
 torchaudio
 protobuf >= 3.19.6, != 4.24.0, < 5.0.
+
+numpy
+# llama-cpp-python
+
+
+ftfy 
+regex 
+tqdm
+
+# git+https://github.com/openai/CLIP.git
+
+openai
+transformers
