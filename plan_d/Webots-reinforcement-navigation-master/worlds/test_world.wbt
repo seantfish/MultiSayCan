@@ -13,9 +13,10 @@ WorldInfo {
 }
 Viewpoint {
   orientation 0.45738140397545923 0.4550219482365827 -0.7640401022985785 1.8460908510985472
-  position 1.7633777134699609 12.192949719425501 23.303839260628163
+  position 1.833905075265916 17.948548153652567 34.09563442339644
 }
 TexturedBackground {
+  texture "empty_office"
 }
 TexturedBackgroundLight {
   castShadows FALSE
@@ -44,6 +45,12 @@ Solid {
     }
   ]
   name "Red"
+  boundingObject Box {
+    size 1 1 0.01
+  }
+  recognitionColors [
+    1 0 0
+  ]
 }
 Solid {
   translation 2 -2 0
@@ -60,6 +67,12 @@ Solid {
     }
   ]
   name "Blue"
+  boundingObject Box {
+    size 1 1 0.01
+  }
+  recognitionColors [
+    0 0 1
+  ]
 }
 Solid {
   translation 2 2 0
@@ -76,6 +89,12 @@ Solid {
     }
   ]
   name "Green"
+  boundingObject Box {
+    size 1 1 0.01
+  }
+  recognitionColors [
+    0 1 0
+  ]
 }
 Desk {
   translation -3.48 -2.81 0
@@ -95,6 +114,12 @@ Solid {
     }
   ]
   name "Yellow"
+  boundingObject Box {
+    size 1 1 0.01
+  }
+  recognitionColors [
+    1 1 0
+  ]
 }
 Robot {
   translation -2.485661864721516 0.00018275466131065926 0.09481477971320842
@@ -104,13 +129,23 @@ Robot {
       translation 0 0 8
       rotation 0 1 0 1.5708
       name "uav camera"
+      fieldOfView 1.57
       width 128
       height 128
     }
     Camera {
       translation 0.13 0 0.05
+      recognitionColors [
+        1 1 0
+        0 1 0
+        0 0 1
+        1 0 0
+      ]
       width 128
       height 128
+      recognition Recognition {
+        maxObjects 4
+      }
     }
     DEF BODY Pose {
       rotation 0.5773502691896258 -0.5773502691896258 -0.5773502691896258 2.094395
@@ -1372,8 +1407,8 @@ WoodenBox {
 }
 OfficeChair {
   hidden position_0_0 -4.296318408414379e-05
-  hidden rotation_1 0 0 1 0.07347999270382295
-  translation 2.967749999991782 2.856930000006764 -0.0014165113025668419
+  hidden rotation_1 0 0 1 0.07347999270379878
+  translation 3.52227 3.34681 -0.00245373
   rotation 0.0006841627310623355 0.0003090502032076355 0.9999997182046249 -2.418041397657596
 }
 WoodenBox {

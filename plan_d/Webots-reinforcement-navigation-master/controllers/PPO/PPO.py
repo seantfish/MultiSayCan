@@ -153,7 +153,29 @@ class GroundRobot(RobotSupervisorEnv):
     
     def get_camera_view(self, camera_name):
         camera = self.getDevice(camera_name)
-        return camera.getImageArray()
+        image = np.array(camera.getImageArray())
+
+        detected_colors = []
+        if camera_name == 'camera':
+            camera.recognitionEnable(1)
+            objects = camera.getRecognitionObjects()
+            if len(objects) >= 1:
+                for object in objects:
+                    color_ar = object.getColors()
+                    red_chan = color_ar[0]
+                    green_chan = color_ar[1]
+                    blue_chan = color_ar[2]
+                    if red_chan==0 and green_chan==0 and blue_chan==1:
+                        detected_colors.append('blue')
+                    elif red_chan==1 and green_chan==0 and blue_chan==0:
+                        detected_colors.append('red')
+                    elif red_chan==0 and green_chan==1 and blue_chan==0:
+                        detected_colors.append('green')
+                    elif red_chan==1 and green_chan==1 and blue_chan==0:
+                        detected_colors.append('yellow')
+            # camera.recognitionDisable()
+
+        return image, detected_colors
     
     def get_distance_to_goal(self):
         """
@@ -435,8 +457,8 @@ class CameraAction():
         self.camera = camera
     
     def go(self):
-        image = self.env.get_camera_view(self.camera)
-        return np.array(image)
+        image, colors = self.env.get_camera_view(self.camera)
+        return np.array(image), colors
     
     def get_affordance(self):
         return 1
@@ -487,7 +509,7 @@ for action in camera_action_set.keys():
     print(action)
     do_action = camera_action_set[action]
     print(do_action.get_affordance())
-    img = do_action.go()
+    img, _ = do_action.go()
     # plt.imshow(do_action.go())
     # plt.show()
 
@@ -701,16 +723,17 @@ def affordance_scoring(actions, desc=""):
                 affordance_scores[action_desc] = action_aff
             if color in action_desc and color not in desc:
                 action = actions[action_desc]
-                action_aff = .2 * action.get_affordance()
-                affordance_scores[action_desc] = action_aff            
+                action_aff = 0 * action.get_affordance()
+                affordance_scores[action_desc] = action_aff
+            
     max_val = np.max(np.array(list(affordance_scores.values())))
     if max_val == 0:
        max_val = 1
     for action_desc in actions.keys():
         if action_desc not in affordance_scores.keys():
             if action_desc != 'done':
-               affordance_scores[action_desc] = max_val
-    affordance_scores['done'] = .3 * max_val
+               affordance_scores[action_desc] = 2 * max_val
+    affordance_scores['done'] = .2 * max_val
     for action_desc in affordance_scores.keys():
         affordance_scores[action_desc] *= 10
     return affordance_scores
@@ -755,7 +778,7 @@ vpsc_action_set = {
     'go to the blue square': Action([2, -2], env, model),
     'go to the green square': Action([2, 2], env, model),
     'go to the yellow square': Action([-2, 2], env, model),
-    'get an overhead view': CameraAction('uav camera', env),
+    'get another camera view': CameraAction('uav camera', env),
     'done': TerminationAction(env)
 }
 
@@ -766,10 +789,9 @@ class Experiment():
         self.tasks = tasks
         self.action_set = action_set
         self.task_idx = 0
-        self.action_depth_limit = 2 #7
+        self.action_depth_limit = 9
         self.cam = CameraAction('camera', env)
         self.questions = [
-            "the square colors are ",
             "furniture in the room includes "
         ]
         self.all_llm_scores = []
@@ -779,7 +801,10 @@ class Experiment():
         selected_task = ""
         self.steps_text = []
         self.image = None
+        self.colors = []
         self.plot = True
+        self.uav = False
+        self.last_action = None
 
         if not os.path.exists('./'+self.name):
             os.mkdir('./'+self.name)
@@ -788,9 +813,11 @@ class Experiment():
         prompt = "You are creating a plan for a robot. "
         prompt += "Your task is " + task + ". \n"
         prompt += "You observe the following: " + desc
-        prompt += "Your plan looks like: \n"
+        prompt += "You can get another camera perspective if observations are not enough. \n"
+        prompt += "Your plan so far looks like: \n"
         for step in self.steps_text:
            prompt += step + "\n"
+        prompt += "Your next action is: \n"
         print(prompt)
         return prompt
 
@@ -804,15 +831,32 @@ class Experiment():
         env.reset()
         
         i = 0
-        self.image = self.cam.go()
+        self.image, self.colors = self.cam.go()
         while i < self.action_depth_limit:
 
             scene_description = build_scene_description(self.image, git_processor, git_model, self.questions)
+            if self.uav == False:
+                if len(self.colors) > 0:
+                    detected_colors = "The following color squares are detected:"
+                    for color in self.colors:
+                        detected_colors += ' '
+                        detected_colors += str(color)
+                    detected_colors += ". "
+                    scene_description += detected_colors
+                else:
+                    detected_colors = "No color squares are detected."
+                    scene_description += detected_colors
+            else:
+                scene_description += "The following color squares are detected: red, green, blue, yellow. "
+
+
             affordance_scores = affordance_scoring(self.action_set, scene_description)
             
             prompt = self.create_prompt(task, scene_description)
             self.prompts.append(prompt)
-            options = self.action_set.keys()
+            options = list(self.action_set.keys())
+            if self.last_action is not None:
+                options.remove(self.last_action)
 
             llm_scores, _ = gpt3_scoring(prompt, options, verbose=True, print_tokens=False)
             combined_scores = {option: np.exp(llm_scores[option]) * affordance_scores[option] for option in options}
@@ -820,6 +864,7 @@ class Experiment():
             selected_action = max(combined_scores, key=combined_scores.get)
             self.steps_text.append(selected_action)
             print(i, "Selecting: ", selected_action)
+            self.last_action = selected_action
 
             self.all_llm_scores.append(llm_scores)
             self.all_affordance_scores.append(affordance_scores)
@@ -830,13 +875,15 @@ class Experiment():
                i += self.action_depth_limit
                break
 
-            if "overhead" in selected_action:
+            if "camera" in selected_action:
                self.cam = CameraAction('uav camera', env)
-               self.image = self.cam.go()
+               self.image, self.colors = self.cam.go()
+               self.uav = True
             else:
                self.cam = CameraAction('camera', env)
                self.action_set[selected_action].go()
-               self.image = self.cam.go()
+               self.image, self.colors = self.cam.go()
+               self.uav = False
 
             i += 1
         env.stop_recording()
@@ -870,20 +917,38 @@ class Experiment():
             selected_task = ""
             self.steps_text = []
             self.image = None
+            self.colors = []
+            self.uav = False
+            self.last_action = None
             self.run_task(task_idx)
-        
+            
 
     
 
     
 tasks = [
-   "visit four different color squares"
+   "visit four different color squares",
+#    "find a chair",
+   "find a chair near a green square",
+   "visit the closest color square"
 ]
 
-# base_experiment = Experiment('base', tasks, base_action_set)
-# base_experiment.run_tasks()
+base_experiment = Experiment('base0', tasks, base_action_set)
+base_experiment.run_tasks()
 
-vpsc_experiment = Experiment('vpsc', tasks, vpsc_action_set)
+# vpsc_experiment = Experiment('vpsc0', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+
+base_experiment = Experiment('base1', tasks, base_action_set)
+base_experiment.run_tasks()
+
+vpsc_experiment = Experiment('vpsc1', tasks, vpsc_action_set)
+vpsc_experiment.run_tasks()
+
+base_experiment = Experiment('base2', tasks, base_action_set)
+base_experiment.run_tasks()
+
+vpsc_experiment = Experiment('vpsc2', tasks, vpsc_action_set)
 vpsc_experiment.run_tasks()
 
 # start = time.time()

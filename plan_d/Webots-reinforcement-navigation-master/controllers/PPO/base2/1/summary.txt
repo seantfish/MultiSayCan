@@ -1,0 +1,10 @@
+You are creating a plan for a robot. Your task is find a chair near a green square. 
+You observe the following: furniture in the room includes a wooden door; The following color squares are detected: red. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+Your next action is: 
+
+{'go to the red square': -22.912031203508377, 'go to the blue square': -29.33920270204544, 'go to the green square': -18.41318764380412, 'go to the yellow square': -30.83540850877762, 'done': -21.20374298095703}
+{'go to the red square': 0.31444307416677475, 'go to the blue square': 0.0, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'done': 0.06288861483335495}
+{'go to the red square': 0.9058782986913407, 'go to the blue square': 0.0, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'done': 1.0}
+done
+==============

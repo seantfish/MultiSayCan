@@ -1,0 +1,126 @@
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a wooden door; The following color squares are detected: blue. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+Your next action is: 
+
+{'go to the red square': -30.427864223718643, 'go to the blue square': -27.881926208734512, 'go to the green square': -28.644702345132828, 'go to the yellow square': -29.366006284952164, 'get another camera view': -22.322122815065086, 'done': -20.84929084777832}
+{'go to the red square': 0.0, 'go to the blue square': 0.7384710758924484, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'get another camera view': 1.4769421517848969, 'done': 0.14769421517848969}
+{'go to the red square': 0.0, 'go to the blue square': 0.0019247665829027723, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'get another camera view': 1.0, 'done': 0.4361569489697104}
+get another camera view
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a wooden board and a wooden frame; The following color squares are detected: red, green, blue, yellow. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+Your next action is: 
+
+{'go to the red square': -17.8680028449744, 'go to the blue square': -22.826383067294955, 'go to the green square': -21.404912186786532, 'go to the yellow square': -18.49801100604236, 'done': -17.707855224609375}
+{'go to the red square': 0.7384710758924484, 'go to the blue square': 0.7384710758924484, 'go to the green square': 0.7384710758924484, 'go to the yellow square': 0.7384710758924484, 'get another camera view': 1.4769421517848969, 'done': 0.14769421517848969}
+{'go to the red square': 1.0, 'go to the blue square': 0.007024296421363739, 'go to the green square': 0.02910313607205661, 'go to the yellow square': 0.5325874545067488, 'done': 0.23473682357640302}
+go to the red square
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a red stripe; The following color squares are detected: red yellow. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+go to the red square
+Your next action is: 
+
+{'go to the blue square': -14.329783161636442, 'go to the green square': -15.436036323662847, 'go to the yellow square': -7.943235221318901, 'get another camera view': -10.680378872901201, 'done': -16.322092056274414}
+{'go to the red square': 0.21257594227790833, 'go to the blue square': 0.0, 'go to the green square': 0.0, 'go to the yellow square': 0.21257594227790833, 'get another camera view': 0.42515188455581665, 'done': 0.04251518845558167}
+{'go to the blue square': 0.0, 'go to the green square': 0.0, 'go to the yellow square': 1.0, 'get another camera view': 0.1295100919164249, 'done': 4.593446976852156e-05}
+go to the yellow square
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a door and a door.; The following color squares are detected: yellow. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+go to the red square
+go to the yellow square
+Your next action is: 
+
+{'go to the red square': -11.54523376468569, 'go to the blue square': -8.2514758259058, 'go to the green square': -9.513742675073445, 'get another camera view': -8.601782195270061, 'done': -16.44784927368164}
+{'go to the red square': 0.0, 'go to the blue square': 0.0, 'go to the green square': 0.0, 'go to the yellow square': 0.28895167633891106, 'get another camera view': 0.5779033526778221, 'done': 0.05779033526778221}
+{'go to the red square': 0.0, 'go to the blue square': 0.0, 'go to the green square': 0.0, 'get another camera view': 1.0, 'done': 3.912878504552258e-05}
+get another camera view
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a game; The following color squares are detected: red, green, blue, yellow. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+go to the red square
+go to the yellow square
+get another camera view
+Your next action is: 
+
+{'go to the red square': -15.092255922732875, 'go to the blue square': -8.001593554159626, 'go to the green square': -6.480468031717464, 'go to the yellow square': -14.248414593515918, 'done': -16.918245315551758}
+{'go to the red square': 0.28895167633891106, 'go to the blue square': 0.28895167633891106, 'go to the green square': 0.28895167633891106, 'go to the yellow square': 0.28895167633891106, 'get another camera view': 0.5779033526778221, 'done': 0.05779033526778221}
+{'go to the red square': 0.00018194831567675793, 'go to the blue square': 0.2184658602953165, 'go to the green square': 1.0, 'go to the yellow square': 0.0004230811464239544, 'done': 5.860854204758901e-06}
+go to the green square
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a green carpet.; The following color squares are detected: green. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+go to the red square
+go to the yellow square
+get another camera view
+go to the green square
+Your next action is: 
+
+{'go to the red square': -10.066620571538806, 'go to the blue square': -7.360598154366016, 'go to the yellow square': -11.842867879197001, 'get another camera view': -8.729170787148178, 'done': -15.295842170715332}
+{'go to the red square': 0.0, 'go to the blue square': 0.0, 'go to the green square': 0.28377510607242584, 'go to the yellow square': 0.0, 'get another camera view': 0.5675502121448517, 'done': 0.05675502121448517}
+{'go to the red square': 0.0, 'go to the blue square': 0.0, 'go to the yellow square': 0.0, 'get another camera view': 1.0, 'done': 0.00014064712324003288}
+get another camera view
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a wooden board with a square of square tiles; The following color squares are detected: red, green, blue, yellow. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+go to the red square
+go to the yellow square
+get another camera view
+go to the green square
+get another camera view
+Your next action is: 
+
+{'go to the red square': -10.080817773938179, 'go to the blue square': -7.047737637069076, 'go to the green square': -9.980623416602612, 'go to the yellow square': -7.388129215687513, 'done': -16.316917419433594}
+{'go to the red square': 0.28377510607242584, 'go to the blue square': 0.28377510607242584, 'go to the green square': 0.28377510607242584, 'go to the yellow square': 0.28377510607242584, 'get another camera view': 0.5675502121448517, 'done': 0.05675502121448517}
+{'go to the red square': 0.048167048303692214, 'go to the blue square': 1.0, 'go to the green square': 0.053243168189532904, 'go to the yellow square': 0.7114916632850852, 'done': 1.8857163404549338e-05}
+go to the blue square
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a blue wall; The following color squares are detected: blue. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+go to the red square
+go to the yellow square
+get another camera view
+go to the green square
+get another camera view
+go to the blue square
+Your next action is: 
+
+{'go to the red square': -10.685611261054873, 'go to the green square': -12.301046373322606, 'go to the yellow square': -12.640863014385104, 'get another camera view': -8.528848990797997, 'done': -15.379411697387695}
+{'go to the red square': 0.0, 'go to the blue square': 0.2818675711750984, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'get another camera view': 0.5637351423501968, 'done': 0.056373514235019684}
+{'go to the red square': 0.0, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'get another camera view': 1.0, 'done': 0.00010588596979085996}
+get another camera view
+==============
+You are creating a plan for a robot. Your task is visit the closest color square. 
+You observe the following: furniture in the room includes a game; The following color squares are detected: red, green, blue, yellow. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+get another camera view
+go to the red square
+go to the yellow square
+get another camera view
+go to the green square
+get another camera view
+go to the blue square
+get another camera view
+Your next action is: 
+
+{'go to the red square': -8.132874801754951, 'go to the blue square': -12.83256508409977, 'go to the green square': -11.848164901137352, 'go to the yellow square': -7.779506362974644, 'done': -15.449427604675293}
+{'go to the red square': 0.2818675711750984, 'go to the blue square': 0.2818675711750984, 'go to the green square': 0.2818675711750984, 'go to the yellow square': 0.2818675711750984, 'get another camera view': 0.5637351423501968, 'done': 0.056373514235019684}
+{'go to the red square': 0.702318384373606, 'go to the blue square': 0.00638975903424126, 'go to the green square': 0.01710031254487116, 'go to the yellow square': 1.0, 'done': 9.333091503531255e-05}
+go to the yellow square
+==============
