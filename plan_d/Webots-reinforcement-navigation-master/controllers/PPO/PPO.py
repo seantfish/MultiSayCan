@@ -372,7 +372,7 @@ class GroundRobot(RobotSupervisorEnv):
     
 
     def start_recording(self, filename='hi.mp4'):
-        self.movieStartRecording(filename, 400, 400, None, 10, 70, True)
+        self.movieStartRecording(filename, 400, 400, None, 95, 30, True)
 
     def stop_recording(self):
         self.movieStopRecording()
@@ -738,7 +738,7 @@ tasks = [
    "visit four different color squares",
    "find a chair",
    "find a chair near a green square",
-   "find a table near a red square",
+#    "find a table near a red square",
    "visit the closest color square"
 ]
 
@@ -750,6 +750,15 @@ base_action_set = {
     'done': TerminationAction(env)
 }
 
+vpsc_action_set = {
+    'go to the red square': Action([-2, -2], env, model),
+    'go to the blue square': Action([2, -2], env, model),
+    'go to the green square': Action([2, 2], env, model),
+    'go to the yellow square': Action([-2, 2], env, model),
+    'get an overhead view': CameraAction('uav camera', env),
+    'done': TerminationAction(env)
+}
+
 
 class Experiment():
     def __init__(self, name, tasks, action_set):
@@ -757,7 +766,7 @@ class Experiment():
         self.tasks = tasks
         self.action_set = action_set
         self.task_idx = 0
-        self.action_depth_limit = 2 # 7
+        self.action_depth_limit = 2 #7
         self.cam = CameraAction('camera', env)
         self.questions = [
             "the square colors are ",
@@ -766,12 +775,14 @@ class Experiment():
         self.all_llm_scores = []
         self.all_affordance_scores = []
         self.all_combined_scores = []
+        self.prompts = []
         selected_task = ""
         self.steps_text = []
         self.image = None
         self.plot = True
 
-        os.mkdir('./'+self.name)
+        if not os.path.exists('./'+self.name):
+            os.mkdir('./'+self.name)
 
     def create_prompt(self, task, desc):
         prompt = "You are creating a plan for a robot. "
@@ -785,7 +796,8 @@ class Experiment():
 
     def run_task(self, task_idx):
         task_dir = './'+self.name+'/'+str(task_idx)
-        os.mkdir(task_dir)
+        if not os.path.exists(task_dir):
+            os.mkdir(task_dir)
         env.start_recording(filename=task_dir+'/rec.mp4')
         task = self.tasks[task_idx]
 
@@ -799,6 +811,7 @@ class Experiment():
             affordance_scores = affordance_scoring(self.action_set, scene_description)
             
             prompt = self.create_prompt(task, scene_description)
+            self.prompts.append(prompt)
             options = self.action_set.keys()
 
             llm_scores, _ = gpt3_scoring(prompt, options, verbose=True, print_tokens=False)
@@ -828,14 +841,35 @@ class Experiment():
             i += 1
         env.stop_recording()
         if self.plot:
-            j = 0
-            for llm_scores, affordance_scores, combined_scores, step in zip(
-                self.all_llm_scores, self.all_affordance_scores, self.all_combined_scores, self.steps_text):
-                plot_saycan(llm_scores, affordance_scores, combined_scores, step, show_top=10, save_path=task_dir+'/plot_'+str(j))
-                j += 1
+            with open(task_dir+"/summary.txt", "w") as summary_txt:
+                j = 0
+                for llm_scores, affordance_scores, combined_scores, step in zip(
+                    self.all_llm_scores, self.all_affordance_scores, self.all_combined_scores, self.steps_text):
+                    plot_saycan(llm_scores, affordance_scores, combined_scores, step, show_top=10, save_path=task_dir+'/plot_'+str(j))
+                    
+                    summary_txt.write(self.prompts[j])
+                    summary_txt.write('\n')
+                    summary_txt.write(str(llm_scores))
+                    summary_txt.write('\n')
+                    summary_txt.write(str(affordance_scores))
+                    summary_txt.write('\n')
+                    summary_txt.write(str(combined_scores))
+                    summary_txt.write('\n')
+                    summary_txt.write(str(step))
+                    summary_txt.write('\n')
+                    summary_txt.write('==============')
+                    summary_txt.write('\n')
+                    j += 1
 
     def run_tasks(self):
         for task_idx in range(len(self.tasks)):
+            self.all_llm_scores = []
+            self.all_affordance_scores = []
+            self.all_combined_scores = []
+            self.prompts = []
+            selected_task = ""
+            self.steps_text = []
+            self.image = None
             self.run_task(task_idx)
         
 
@@ -846,8 +880,11 @@ tasks = [
    "visit four different color squares"
 ]
 
-base_experiment = Experiment('base', tasks, base_action_set)
-base_experiment.run_tasks()
+# base_experiment = Experiment('base', tasks, base_action_set)
+# base_experiment.run_tasks()
+
+vpsc_experiment = Experiment('vpsc', tasks, vpsc_action_set)
+vpsc_experiment.run_tasks()
 
 # start = time.time()
 
