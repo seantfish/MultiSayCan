@@ -805,6 +805,7 @@ class Experiment():
         self.plot = True
         self.uav = False
         self.last_action = None
+        self.recording = False
 
         if not os.path.exists('./'+self.name):
             os.mkdir('./'+self.name)
@@ -825,7 +826,7 @@ class Experiment():
         task_dir = './'+self.name+'/'+str(task_idx)
         if not os.path.exists(task_dir):
             os.mkdir(task_dir)
-        env.start_recording(filename=task_dir+'/rec.mp4')
+        # env.start_recording(filename=task_dir+'/rec.mp4')
         task = self.tasks[task_idx]
 
         env.reset()
@@ -875,6 +876,9 @@ class Experiment():
                i += self.action_depth_limit
                break
 
+            env.start_recording(filename=task_dir+'/rec.mp4')
+            self.recording = True
+
             if "camera" in selected_action:
                self.cam = CameraAction('uav camera', env)
                self.image, self.colors = self.cam.go()
@@ -886,7 +890,8 @@ class Experiment():
                self.uav = False
 
             i += 1
-        env.stop_recording()
+        if self.recording:
+            env.stop_recording()
         if self.plot:
             with open(task_dir+"/summary.txt", "w") as summary_txt:
                 j = 0
@@ -920,6 +925,7 @@ class Experiment():
             self.colors = []
             self.uav = False
             self.last_action = None
+            self.recording = False
             self.run_task(task_idx)
             
 
@@ -933,23 +939,58 @@ tasks = [
    "visit the closest color square"
 ]
 
-base_experiment = Experiment('base0', tasks, base_action_set)
-base_experiment.run_tasks()
+# base_experiment = Experiment('base0', tasks, base_action_set)
+# base_experiment.run_tasks()
 
 # vpsc_experiment = Experiment('vpsc0', tasks, vpsc_action_set)
 # vpsc_experiment.run_tasks()
 
-base_experiment = Experiment('base1', tasks, base_action_set)
-base_experiment.run_tasks()
+# base_experiment = Experiment('base1', tasks, base_action_set)
+# base_experiment.run_tasks()
 
-vpsc_experiment = Experiment('vpsc1', tasks, vpsc_action_set)
+# vpsc_experiment = Experiment('vpsc1', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+
+# base_experiment = Experiment('base2', tasks, base_action_set)
+# base_experiment.run_tasks()
+
+# vpsc_experiment = Experiment('vpsc2', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+
+# base_experiment = Experiment('base3', tasks, base_action_set)
+# base_experiment.run_tasks()
+# base_experiment = Experiment('base4', tasks, base_action_set)
+# base_experiment.run_tasks()
+
+
+# vpsc_experiment = Experiment('vpsc3', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+vpsc_experiment = Experiment('vpsc4', tasks, vpsc_action_set)
 vpsc_experiment.run_tasks()
 
-base_experiment = Experiment('base2', tasks, base_action_set)
-base_experiment.run_tasks()
+# base_experiment = Experiment('base5', tasks, base_action_set)
+# base_experiment.run_tasks()
+# base_experiment = Experiment('base6', tasks, base_action_set)
+# base_experiment.run_tasks()
+# base_experiment = Experiment('base7', tasks, base_action_set)
+# base_experiment.run_tasks()
+# base_experiment = Experiment('base8', tasks, base_action_set)
+# base_experiment.run_tasks()
+# base_experiment = Experiment('base9', tasks, base_action_set)
+# base_experiment.run_tasks()
 
-vpsc_experiment = Experiment('vpsc2', tasks, vpsc_action_set)
-vpsc_experiment.run_tasks()
+
+
+# vpsc_experiment = Experiment('vpsc5', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+# vpsc_experiment = Experiment('vpsc6', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+# vpsc_experiment = Experiment('vpsc7', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+# vpsc_experiment = Experiment('vpsc8', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
+# vpsc_experiment = Experiment('vpsc9', tasks, vpsc_action_set)
+# vpsc_experiment.run_tasks()
 
 # start = time.time()
 
