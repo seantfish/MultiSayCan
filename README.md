@@ -1,6 +1,6 @@
 # Visual Perspective SayCan
 
-This world contains experiments for an extension on SayCan which makes use of multiple visual perspectives.
+This repositories contains experiments for an extension on SayCan which makes use of multiple visual perspectives.
 
 ## Path to Experiment
 Experimentation files are in the following path: 
