@@ -1,0 +1,21 @@
+You are creating a plan for a robot. Your task is visit four different color squares. 
+You observe the following: furniture in the room includes a wooden door; The following color squares are detected: blue. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+Your next action is: 
+
+{'go to the red square': -23.03461755439639, 'go to the blue square': -18.019031580537558, 'go to the green square': -24.210595425218344, 'go to the yellow square': -24.68467716500163, 'done': -18.460134506225586}
+{'go to the red square': 0.0, 'go to the blue square': 0.7384710758924484, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'done': 0.14769421517848969}
+{'go to the red square': 0.0, 'go to the blue square': 1.0, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'done': 0.1286652976687593}
+go to the blue square
+==============
+You are creating a plan for a robot. Your task is visit four different color squares. 
+You observe the following: furniture in the room includes a view of the water; The following color squares are detected: blue. You can get another camera perspective if observations are not enough. 
+Your plan so far looks like: 
+go to the blue square
+Your next action is: 
+
+{'go to the red square': -12.23976634920109, 'go to the green square': -13.388234844896942, 'go to the yellow square': -15.176390806678683, 'done': -17.344524383544922}
+{'go to the red square': 0.0, 'go to the blue square': 0.30056921765208244, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'done': 0.060113843530416496}
+{'go to the red square': 0.0, 'go to the green square': 0.0, 'go to the yellow square': 0.0, 'done': 1.0}
+done
+==============
